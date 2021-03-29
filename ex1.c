@@ -74,7 +74,7 @@ void run_command(char **command)
         ret_code = execvp(command[0], command);
         if (ret_code == -1)
         {
-            perror("exec failed");
+            perror("exec failed\n");
             exit(-1);
         }
     }
@@ -86,6 +86,7 @@ void run_command(char **command)
         }
         else
         {
+            printf("fork failed\n");
         }
     }
 }
@@ -110,6 +111,16 @@ void run_built_in_command(char **command)
     add_to_history(command[0], 0, false);
     if (strcmp(command[0], "cd") == 0)
     {
+        int len = 0;
+        while (command[len] != NULL)
+        {
+            len++;
+        }
+        if (len > 2)
+        {
+            printf("Too many arguments\n");
+            return;
+        }
         cd_command(command[1]);
     }
     if (strcmp(command[0], "history") == 0)
@@ -124,11 +135,16 @@ void run_built_in_command(char **command)
 
 void cd_command(char *dir)
 {
+
     if (strcmp(dir, "~") == 0)
     {
         strcpy(dir, getenv("HOME"));
     }
-    chdir(dir);
+    int chdirvalue = chdir(dir);
+    if (chdirvalue != 0)
+    {
+        printf("chdir failed\n");
+    }
 }
 
 void jobs_command()
