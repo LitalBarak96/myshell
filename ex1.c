@@ -32,6 +32,7 @@ char **get_input(char *input)
         parsed = strtok(NULL, separator);
     }
 
+    
     command[index] = NULL;
     return command;
 }
@@ -66,6 +67,22 @@ void run_command(char **command)
         isbackground = true;
     }
 
+    if(strcmp(command[0],"echo") == 0){
+        char *string_to_print = command[1];
+        char parsed[500] = "";
+        int parsed_index = 0;
+        for(int i=0;i<strlen(string_to_print);i++){
+            if(string_to_print[i] == '"'){
+                
+            }
+            else{
+                parsed[parsed_index] = string_to_print[i];
+                parsed_index++;
+            }
+        }
+        strcpy(command[1],parsed);
+    }
+
     pid = fork();
     add_to_history(command[0], pid, isbackground);
 
@@ -87,6 +104,7 @@ void run_command(char **command)
         else
         {
             printf("fork failed\n");
+            exit(-1);
         }
     }
 }
