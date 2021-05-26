@@ -1,63 +1,3 @@
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// #include <time.h>
-// #include <unistd.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-
-// int main(int argc, char *argv[])
-// {
-//    struct stat sb;
-
-//    if (argc != 2) {
-//         fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
-//         exit(EXIT_FAILURE);
-//     }
-
-//    if (stat(argv[1], &sb) == -1) {
-//         perror("stat");
-//         exit(EXIT_FAILURE);
-//     }
-
-//    printf("File type: ");
-
-//     if(S_ISBLK(sb.st_mode))
-//     	printf("block device\n");     
-//     else if(S_ISCHR(sb.st_mode)) 
-//     	printf("character device\n");  
-//     else if(S_ISDIR(sb.st_mode))
-//     	printf("directory\n");
-//     else if(S_ISFIFO(sb.st_mode))
-//     	printf("FIFO/pipe\n");              
-//     else if(S_ISLNK(sb.st_mode))
-//     	printf("symlink\n");   	
-//     else if(S_ISREG(sb.st_mode))
-//     	printf("regular file\n");          	
-//     else if(S_ISSOCK(sb.st_mode))
-//     	printf("socket\n");
-//     else 
-//     	printf ("unknown\n");
-    
-
-//    printf("I-node number:            %ld\n", (long) sb.st_ino);
-
-//    printf("Mode:                     %lo (octal)\n", (unsigned long) sb.st_mode);
-
-//    printf("Link count:               %ld\n", (long) sb.st_nlink);
-//    printf("Ownership:                UID=%ld   GID=%ld\n",(long) sb.st_uid, (long) sb.st_gid);
-
-//    printf("Preferred I/O block size: %ld bytes\n", (long) sb.st_blksize);
-//    printf("File size:                %lld bytes\n", (long long) sb.st_size);
-//    printf("Blocks allocated:         %lld\n",(long long) sb.st_blocks);
-
-//    printf("Last status change:       %s", ctime(&sb.st_ctime));
-//    printf("Last file access:         %s", ctime(&sb.st_atime));
-//    printf("Last file modification:   %s", ctime(&sb.st_mtime));
-
-//    exit(EXIT_SUCCESS);
-// }
-
-
 #include <sys/types.h>
 #include <time.h>
 #include <stdio.h>
@@ -66,16 +6,107 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#define SIZE 1
+
+int excute(char* filename ,char* args[]){
+    pid_t pid;
+    int status;
+    time_t start;
+    time(&start);
+    time_t finish;
+    // char* args[] = {"./a.exe", "a.exe", NULL };
+    if((pid = fork()) < 0){
+        printf("error fork child procces failed\n");
+        exit(1);
+    }
+    else if(pid == 0){
+        if (execvp(filename, args) < 0 ){
+            printf("exec fail\n");
+            // if exec fails cant compile the shit 
+            exit(1);
+            
+         }
+    }
+    else{
+        waitpid(pid,&status,0);
+        time(&finish);
+        if((difftime(finish,start))>5){
+            return 5;
+        }
+        else{
+            return status;
+        }
+    }
+
+}
+
+
+
 
 int main(int argc,char *argv[])
 {
-    if (chdir(argv[1]) != 0) {
+    
+    char buf1[SIZE];
+	int charsr1;
+    int i = 0;
+    
+    int fdin1;           /* input file descriptor */ 
+
+	fdin1 = open(argv[1],O_RDONLY);
+	if (fdin1 < 0) /* means file open did not take place */ 
+	{                
+		perror("after open ");   /* text explaining why */ 
+		exit(-1); 
+	}
+
+    //is it should be 2 or 3
+   char line1[3][255];
+
+    int j=0;
+do{
+        char buf1[SIZE]={};
+		charsr1 = read(fdin1, buf1 ,SIZE);
+        if (buf1[0]!=10){
+        line1[i][j] = buf1[0];
+        j++;
+        }
+        else{
+            i++;
+            j++;
+            line1[i][j]='\0';
+            j=0;
+        }
+
+}while(charsr1 == SIZE);
+
+
+
+pid_t pid;
+int status;
+    if (chdir(line1[0])!= 0) {
     perror("chdir()  failed");
     }
-    
-    int dir_count = 0;
+    else{
     struct dirent* dent;
+    struct dirent* dent1;
     DIR* srcdir = opendir(".");
+    DIR* srcdir1 = opendir(".");
+    int newfd;
+    int infd;
+    int wrfd;
+    int errfd;
+
+    if((wrfd = open("result.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
+    perror("result.csv");
+     exit(1);
+     }
+
+        if((errfd = open("error.txt",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
+    perror("result.csv");
+     exit(1);
+     }
 
     if (srcdir == NULL)
     {
@@ -95,11 +126,62 @@ int main(int argc,char *argv[])
             perror(dent->d_name);
             continue;
         }
+            if (S_ISDIR(st.st_mode)){
+            if(chdir(dent->d_name)!=0){
+            perror("chdir() to name  failed");
+            }
+            else{
+            DIR* srcdir1 = opendir(".");
+            infd = open(line1[1],O_RDONLY);
+            if((newfd = open("d.txt",O_CREAT|O_TRUNC|O_WRONLY,0664))<0){
+            perror("d.txt");
+            exit(1);
+            }
+            while((dent1 = readdir(srcdir1)) != NULL)
+               {
+                   if(dent1->d_type == DT_REG){
+                    char * end = strrchr(dent1->d_name, '.');
+                        if(strcmp(end, ".c") == 0){
+                        char *student[]={"gcc","-o","./a.out",dent1->d_name,NULL};
+                        excute("gcc",student);
+                        char* run[] = {"a.out",NULL};
+                        dup2(infd, 0); 
+                        dup2(newfd,1);
+                        dup2(errfd,2);
+                    if(excute("./a.out",run)==5){
+                        // printf("5");
+                        // fflush(stdout);
+                        
 
-        if (S_ISDIR(st.st_mode)){
-            printf("directory\n");
+
+                    dup2(wrfd,1);
+                    printf("20 timeout error\n");
+                    fflush(stdout);
+
+                    
+                       } 
+                    }
+                    //if nothing is written inside there is no C file
+                   }
+                   
+               }
+               
+                 chdir("..");
+
+                closedir(srcdir1);
+            }
         }
+    
+    
     }
+    close(wrfd);
+    close(newfd);
+    close(infd);
+    
     closedir(srcdir);
     return 0;
+    }
+
+
+
 }
