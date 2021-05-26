@@ -149,8 +149,6 @@ int status;
                         dup2(newfd,1);
                         dup2(errfd,2);
                     if(excute("./a.out",run)==5){
-                        // printf("5");
-                        // fflush(stdout);
                         
 
 
