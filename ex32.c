@@ -10,17 +10,15 @@
 #include <fcntl.h>
 #define SIZE 1
 
-
-
-int compareOutput(char outputFile[]){
+int compareOutput(char outputFile[],char path[]){
     int status;
     pid_t pid;
     pid = fork();
     if(pid == 0) {
-        char *tab[] = {"./comp.out",outputFile, "d.txt", NULL};
-        if (execvp("./comp.out", tab) == -1) {
-            if(write(2, "error in running in compare function\n",
-                     strlen("error in running in compare function\n")) == -1){}
+        char *tab[] = {path,outputFile, "d.txt", NULL};
+        if (execvp(path, tab) == -1) {
+            if(write(2, "error in compare\n",
+                     strlen("error in compare\n")) == -1){}
             exit(-1);
         }
     } else if(pid < 0){
@@ -31,7 +29,7 @@ int compareOutput(char outputFile[]){
              //the returnd value is 0
             } else if(WIFEXITED(status) && WEXITSTATUS(status)) {
                 if (WEXITSTATUS(status) == 127) {
-                    printf("error in compare function\n");
+                    printf("error in compare\n");
                 } else {
                    if(WEXITSTATUS(status) == 1){
                        return 1;
@@ -56,7 +54,6 @@ int excute(char* filename ,char* args[],int fder){
     time(&start);
     time_t finish;
     if((pid = fork()) < 0){
-        printf("error fork child procces failed\n");
         if(write(fder, "error fork child procces failed\n\n",
                      strlen("error fork child procces failed\n\n")) == -1){}
         exit(1);
@@ -87,19 +84,30 @@ int excute(char* filename ,char* args[],int fder){
 
 int main(int argc,char *argv[])
 {
+    char cwd[150];
+    int newfd;
+    int infd;
+    int wrfd;
+    int errfd=2;
     int flag=0;
     char buf1[SIZE];
 	int charsr1;
     int i = 0;
-    
-    int fdin1;           /* input file descriptor */ 
+    getcwd(cwd, sizeof(cwd));
+    char tempPath[150];
+    strncpy(tempPath,cwd,150);
+    strcat(tempPath,"/comp.out");
 
+    int fdin1;           /* input file descriptor */ 
+    char *comp[]={"gcc","-o","./comp.out","comp.c",NULL};
+    excute("gcc",comp,errfd);
 	fdin1 = open(argv[1],O_RDONLY);
 	if (fdin1 < 0) /* means file open did not take place */ 
 	{                
 		perror("after open ");   /* text explaining why */ 
 		exit(-1); 
 	}
+
 
     //is it should be 2 or 3
    char line1[3][255];
@@ -133,11 +141,10 @@ int status;
     struct dirent* dent1;
     DIR* srcdir = opendir(".");
     DIR* srcdir1 = opendir(".");
-    int newfd;
-    int infd;
-    int wrfd;
-    int errfd;
+ 
     int counter_for_c=0;
+
+
 
     if((wrfd = open("results.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
     perror("results.csv");
@@ -148,6 +155,8 @@ int status;
     perror("result.csv");
      exit(1);
      }
+
+    
 
     if (srcdir == NULL)
     {
@@ -191,33 +200,33 @@ int status;
                         excute("gcc",student,errfd);
                         char* run[] = {"a.out",NULL};
                         int ret = excute("./a.out",run,errfd);
-                        int com = compareOutput(line1[2]);
+                        int com = compareOutput(line1[2],tempPath);
                     if(ret==5){
                     dup2(wrfd,1);
                     write(wrfd,"20 timeout error\n",strlen("20 timeout error\n"));
                     fflush(stdout);
-                    
+                    flag =1;
                        }
                     if(ret==-3){
-                    
+                    flag =1;
                     dup2(wrfd,1);
                     write(wrfd,"10 compile\n",strlen("10 compile\n"));
                     fflush(stdout);
                     
                     }
-                    if(com == 1){
+                    if(com == 1&&flag==0){
                     dup2(wrfd,1);
-                    write(wrfd, dent1->d_name, strlen(dent1->d_name));
+                    write(wrfd, "100\n", strlen("100\n"));
                     fflush(stdout);
                     }
-                    if(com == 2){
+                    if(com == 2&&flag==0){
                     dup2(wrfd,1);
-                    write(wrfd, dent1->d_name, strlen(dent1->d_name));
+                    write(wrfd, "50\n", strlen("50\n"));
                     fflush(stdout);
                     }
-                    if(com == 3){
+                    if(com == 3&&flag==0){
                     dup2(wrfd,1);
-                    write(wrfd, dent1->d_name, strlen(dent1->d_name));
+                    write(wrfd, "75\n", strlen("75\n"));
                     fflush(stdout);
                     }
                         }
