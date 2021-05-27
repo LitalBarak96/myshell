@@ -10,6 +10,45 @@
 #include <fcntl.h>
 #define SIZE 1
 
+
+
+int compareOutput(char outputFile[]){
+    int status;
+    pid_t pid;
+    pid = fork();
+    if(pid == 0) {
+        char *tab[] = {"./comp.out",outputFile, "d.txt", NULL};
+        if (execvp("./comp.out", tab) == -1) {
+            if(write(2, "error in running in compare function\n",
+                     strlen("error in running in compare function\n")) == -1){}
+            exit(-1);
+        }
+    } else if(pid < 0){
+        return -1;
+    } else if(pid > 0){
+        if(waitpid(pid, &status, 0) >0){
+            if(WIFEXITED(status) && !WEXITSTATUS(status)){
+             //the returnd value is 0
+            } else if(WIFEXITED(status) && WEXITSTATUS(status)) {
+                if (WEXITSTATUS(status) == 127) {
+                    printf("error in compare function\n");
+                } else {
+                   if(WEXITSTATUS(status) == 1){
+                       return 1;
+                   } else if(WEXITSTATUS(status) == 2){
+                       return 2;
+                   } else if(WEXITSTATUS(status) == 3){
+                       return 3;
+                   }
+                }
+            }
+        } else{
+            return -1;
+        }
+    }
+    return 0;
+}
+
 int excute(char* filename ,char* args[],int fder){
     pid_t pid;
     int status;
@@ -26,7 +65,6 @@ int excute(char* filename ,char* args[],int fder){
         if (execvp(filename, args) < 0 ){
             if(write(fder, "error in compile file, execvp failed.\n",
                      strlen("error in compile file, execvp failed.\n")) == -1){}
-            // if exec fails cant compile the shit 
             return -3;
             
          }
@@ -49,7 +87,7 @@ int excute(char* filename ,char* args[],int fder){
 
 int main(int argc,char *argv[])
 {
-    
+    int flag=0;
     char buf1[SIZE];
 	int charsr1;
     int i = 0;
@@ -99,7 +137,7 @@ int status;
     int infd;
     int wrfd;
     int errfd;
-    int counter_for_c;
+    int counter_for_c=0;
 
     if((wrfd = open("results.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
     perror("results.csv");
@@ -153,6 +191,7 @@ int status;
                         excute("gcc",student,errfd);
                         char* run[] = {"a.out",NULL};
                         int ret = excute("./a.out",run,errfd);
+                        int com = compareOutput(line1[2]);
                     if(ret==5){
                     dup2(wrfd,1);
                     write(wrfd,"20 timeout error\n",strlen("20 timeout error\n"));
@@ -160,22 +199,41 @@ int status;
                     
                        }
                     if(ret==-3){
+                    
                     dup2(wrfd,1);
                     write(wrfd,"10 compile\n",strlen("10 compile\n"));
                     fflush(stdout);
                     
-                       }
                     }
+                    if(com == 1){
+                    dup2(wrfd,1);
+                    write(wrfd, dent1->d_name, strlen(dent1->d_name));
+                    fflush(stdout);
+                    }
+                    if(com == 2){
+                    dup2(wrfd,1);
+                    write(wrfd, dent1->d_name, strlen(dent1->d_name));
+                    fflush(stdout);
+                    }
+                    if(com == 3){
+                    dup2(wrfd,1);
+                    write(wrfd, dent1->d_name, strlen(dent1->d_name));
+                    fflush(stdout);
+                    }
+                        }
                     //if nothing is written inside there is no C file
                    }
                    
                }
                if(counter_for_c==0){
+                   
                     dup2(wrfd,1);
                     write(wrfd,"0 no C\n",strlen("0 no C\n"));
                     fflush(stdout);
                }
-               
+
+               counter_for_c =0;
+                
                  chdir("..");
 
                 closedir(srcdir1);
