@@ -10,17 +10,30 @@
 #include <fcntl.h>
 #define SIZE 1
 
+
+int Write_to_csv(int fd,char* name, char* msg){
+    char tempArr[1024];
+    strcpy(tempArr,name);
+    char* temp = strcat(tempArr,msg);
+    if (write(fd, temp, strlen(temp)) == -1) {}
+    return 0;
+}
+
+
+//comparing the output with comp.out
 int compareOutput(char outputFile[],char path[]){
     int status;
     pid_t pid;
     pid = fork();
     if(pid == 0) {
-        char *tab[] = {path,outputFile, "d.txt", NULL};
-        if (execvp(path, tab) == -1) {
+        char *comp[] = {path,outputFile, "d.txt", NULL};
+        if (execvp(path,comp) == -1) {
+            //write the error to error 
             if(write(2, "error in compare\n",
                      strlen("error in compare\n")) == -1){}
             exit(-1);
         }
+        //if error
     } else if(pid < 0){
         return -1;
     } else if(pid > 0){
@@ -28,6 +41,7 @@ int compareOutput(char outputFile[],char path[]){
             if(WIFEXITED(status) && !WEXITSTATUS(status)){
              //the returnd value is 0
             } else if(WIFEXITED(status) && WEXITSTATUS(status)) {
+                //ERROR: Could not execute 
                 if (WEXITSTATUS(status) == 127) {
                     printf("error in compare\n");
                 } else {
@@ -46,7 +60,7 @@ int compareOutput(char outputFile[],char path[]){
     }
     return 0;
 }
-
+// function to excute the program with complie
 int excute(char* filename ,char* args[],int fder){
     pid_t pid;
     int status;
@@ -67,10 +81,11 @@ int excute(char* filename ,char* args[],int fder){
          }
     }
     else{
+        //if we need to wait more than 5 sec
         waitpid(pid,&status,0);
         time(&finish);
         if((difftime(finish,start))>5){
-            return 5;
+            return 6;
         }
         else{
             return status;
@@ -99,19 +114,19 @@ int main(int argc,char *argv[])
     strcat(tempPath,"/comp.out");
 
     int fdin1;           /* input file descriptor */ 
+    //compileing EX31 for comp.c 
     char *comp[]={"gcc","-o","./comp.out","comp.c",NULL};
     excute("gcc",comp,errfd);
 	fdin1 = open(argv[1],O_RDONLY);
 	if (fdin1 < 0) /* means file open did not take place */ 
 	{                
-		perror("after open ");   /* text explaining why */ 
+		perror("after open ");  
 		exit(-1); 
 	}
 
 
-    //is it should be 2 or 3
+    //for the 3 arguments inside the config
    char line1[3][255];
-
     int j=0;
 do{
         char buf1[SIZE]={};
@@ -129,31 +144,28 @@ do{
 
 }while(charsr1 == SIZE);
 
-
-
-pid_t pid;
-int status;
+//changing the dirctory 
     if (chdir(line1[0])!= 0) {
-    perror("chdir()  failed");
+    perror("Not a Valid Directory\n");
+    exit(-1);
     }
     else{
     struct dirent* dent;
     struct dirent* dent1;
     DIR* srcdir = opendir(".");
     DIR* srcdir1 = opendir(".");
- 
     int counter_for_c=0;
 
 
-
+//for the csv file 
     if((wrfd = open("results.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
     perror("results.csv");
-     exit(1);
+     exit(-1);
      }
-
+//for the error file
         if((errfd = open("error.txt",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
-    perror("result.csv");
-     exit(1);
+    perror("error.txt");
+     exit(-1);
      }
 
     
@@ -171,6 +183,8 @@ int status;
         if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
             continue;
 
+
+// I need to fix searching in SUb directorys
         if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0)
         {   
             perror(dent->d_name);
@@ -182,7 +196,16 @@ int status;
             }
             else{
             DIR* srcdir1 = opendir(".");
-            infd = open(line1[1],O_RDONLY);
+
+
+            if((infd = open(line1[1],O_RDONLY))<0){
+                perror("Input file not fxist\n");
+                exit(1);
+            }
+            if(open(line1[2],O_RDONLY)<0){
+                perror("Output file not fxist\n");
+                exit(1);
+            }
             if((newfd = open("d.txt",O_CREAT|O_TRUNC|O_WRONLY,0664))<0){
             perror("d.txt");
             exit(1);
@@ -201,32 +224,37 @@ int status;
                         char* run[] = {"a.out",NULL};
                         int ret = excute("./a.out",run,errfd);
                         int com = compareOutput(line1[2],tempPath);
-                    if(ret==5){
+                    if(ret==6){
+                    remove("d.txt");
                     dup2(wrfd,1);
-                    write(wrfd,"20 timeout error\n",strlen("20 timeout error\n"));
+                    Write_to_csv(wrfd,dent->d_name,",20,TIMEOUT\n");
                     fflush(stdout);
                     flag =1;
                        }
                     if(ret==-3){
                     flag =1;
+                    remove("d.txt");
                     dup2(wrfd,1);
-                    write(wrfd,"10 compile\n",strlen("10 compile\n"));
+                    Write_to_csv(wrfd,dent->d_name,",10,COMPILATION_ERROR\n");
                     fflush(stdout);
                     
                     }
                     if(com == 1&&flag==0){
+                    remove("d.txt");
                     dup2(wrfd,1);
-                    write(wrfd, "100\n", strlen("100\n"));
+                    Write_to_csv(wrfd,dent->d_name,",100,EXCELLENT\n");
                     fflush(stdout);
                     }
                     if(com == 2&&flag==0){
+                    remove("d.txt");
                     dup2(wrfd,1);
-                    write(wrfd, "50\n", strlen("50\n"));
+                    Write_to_csv(wrfd,dent->d_name,",50,WRONG\n");
                     fflush(stdout);
                     }
                     if(com == 3&&flag==0){
+                    remove("d.txt");
                     dup2(wrfd,1);
-                    write(wrfd, "75\n", strlen("75\n"));
+                    Write_to_csv(wrfd,dent->d_name,",75,SIMILAR\n");
                     fflush(stdout);
                     }
                         }
@@ -235,9 +263,9 @@ int status;
                    
                }
                if(counter_for_c==0){
-                   
+                   remove("d.txt");
                     dup2(wrfd,1);
-                    write(wrfd,"0 no C\n",strlen("0 no C\n"));
+                    Write_to_csv(wrfd,dent->d_name,",0,NO_C_FILE\n");
                     fflush(stdout);
                }
 
