@@ -10,22 +10,24 @@
 #include <fcntl.h>
 #define SIZE 1
 
-int excute(char* filename ,char* args[]){
+int excute(char* filename ,char* args[],int fder){
     pid_t pid;
     int status;
     time_t start;
     time(&start);
     time_t finish;
-    // char* args[] = {"./a.exe", "a.exe", NULL };
     if((pid = fork()) < 0){
         printf("error fork child procces failed\n");
+        if(write(fder, "error fork child procces failed\n\n",
+                     strlen("error fork child procces failed\n\n")) == -1){}
         exit(1);
     }
     else if(pid == 0){
         if (execvp(filename, args) < 0 ){
-            printf("exec fail\n");
+            if(write(fder, "error in compile file, execvp failed.\n",
+                     strlen("error in compile file, execvp failed.\n")) == -1){}
             // if exec fails cant compile the shit 
-            exit(1);
+            return -3;
             
          }
     }
@@ -97,9 +99,10 @@ int status;
     int infd;
     int wrfd;
     int errfd;
+    int counter_for_c;
 
-    if((wrfd = open("result.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
-    perror("result.csv");
+    if((wrfd = open("results.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
+    perror("results.csv");
      exit(1);
      }
 
@@ -142,26 +145,35 @@ int status;
                    if(dent1->d_type == DT_REG){
                     char * end = strrchr(dent1->d_name, '.');
                         if(strcmp(end, ".c") == 0){
+                        counter_for_c++;
                         char *student[]={"gcc","-o","./a.out",dent1->d_name,NULL};
-                        excute("gcc",student);
-                        char* run[] = {"a.out",NULL};
                         dup2(infd, 0); 
                         dup2(newfd,1);
                         dup2(errfd,2);
-                    if(excute("./a.out",run)==5){
-                        
-
-
+                        excute("gcc",student,errfd);
+                        char* run[] = {"a.out",NULL};
+                        int ret = excute("./a.out",run,errfd);
+                    if(ret==5){
                     dup2(wrfd,1);
-                    printf("20 timeout error\n");
+                    write(wrfd,"20 timeout error\n",strlen("20 timeout error\n"));
                     fflush(stdout);
-
                     
-                       } 
+                       }
+                    if(ret==-3){
+                    dup2(wrfd,1);
+                    write(wrfd,"10 compile\n",strlen("10 compile\n"));
+                    fflush(stdout);
+                    
+                       }
                     }
                     //if nothing is written inside there is no C file
                    }
                    
+               }
+               if(counter_for_c==0){
+                    dup2(wrfd,1);
+                    write(wrfd,"0 no C\n",strlen("0 no C\n"));
+                    fflush(stdout);
                }
                
                  chdir("..");
