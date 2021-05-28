@@ -1,1 +1,0 @@
-/home/lital/Desktop/myshell/students/TIMEOUT_gets_20/Example.c

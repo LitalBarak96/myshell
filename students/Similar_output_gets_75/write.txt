@@ -1,3 +1,0 @@
-Please enter two numbers
-10
-/home/lital/Desktop/myshell/students/Similar_output_gets_75/Example.c

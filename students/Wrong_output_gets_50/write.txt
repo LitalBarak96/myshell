@@ -1,2 +1,0 @@
-This is not the correct output!
-/home/lital/Desktop/myshell/students/Wrong_output_gets_50/Example.c
