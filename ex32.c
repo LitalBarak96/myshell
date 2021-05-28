@@ -25,7 +25,7 @@ int compareOutput(char outputFile[],char path[]){
     pid_t pid;
     pid = fork();
     if(pid == 0) {
-        char *comp[] = {path,outputFile, "d.txt", NULL};
+        char *comp[] = {path,outputFile, "write.txt", NULL};
         if (execvp(path,comp) == -1) {
             //write the error to error 
             if(write(2, "error in compare\n",
@@ -165,7 +165,10 @@ int main(int argc,char *argv[])
       }
     char *comp[]={"gcc","-o","./comp.out","comp.c",NULL};
      excute("gcc",comp,errfd);
-
+    char compad[150];
+    strncpy(compad,main,150);
+    strcat(compad,"/");
+    strcat(compad,"comp.out");
 
 //     //for the 3 arguments inside the config
 //    char line1[3][150];
@@ -227,6 +230,7 @@ int main(int argc,char *argv[])
     }
 //until here we where in student and no
     while((dent = readdir(srcdir)) != NULL)
+
          {
           struct stat st;
          getcwd(cwd1, sizeof(cwd1));
@@ -250,8 +254,15 @@ int main(int argc,char *argv[])
             if ((srcdir1 = opendir(level1)) == NULL){
                  return -1;
                  perror("here");
-            }
-           
+            }             char write[150];
+                         strncpy(write,level1,150);
+                        strcat(write,"/");
+                         strcat(write,"write.txt");
+
+        if((newfd = open(write,O_CREAT|O_TRUNC|O_WRONLY,0664))<0){
+        perror("write.txt");
+        exit(-1);
+        }
             
 //            read the files inside
 
@@ -259,16 +270,10 @@ int main(int argc,char *argv[])
                 {
 
 // open in each sub dir the write file I need to make it write into it
-                        char write[150];
-                         strncpy(write,level1,150);
-                        strcat(write,"/");
-                         strcat(write,"write.txt");
+
                         char level2[150];
                          strncpy(level2,level1,150);
-                             if((newfd = open(write,O_CREAT|O_TRUNC|O_WRONLY,0664))<0){
-    perror("write.txt");
-    exit(-1);
-    }
+
                     char* end = strrchr(dent1->d_name,'.');
                     if(end && !strcmp(end, ".c")) {
                          
@@ -277,14 +282,17 @@ int main(int argc,char *argv[])
                          strcat(level2,dent1->d_name);
                          printf("%s",level2);
                          
-                        char *student[]={"gcc", level2, "-o", "a.out", NULL};
                         dup2(infd, 0); 
                         dup2(newfd,1);
                         dup2(errfd,2);
+                        char *student[]={"gcc","-o","./a.out",level2,NULL};
+
                         excute("gcc",student,errfd);
                         char* run[] = {"a.out",NULL};
                         int ret = excute("./a.out",run,errfd);
-                        // int com = compareOutput(pathOutput,tempPath);
+                        Write_to_csv(wrfd,level1,",20,TIMEOUT\n");
+                        fflush(stdout);
+                        // int com = compareOutput(pathOutput,compad);
                     }
                     // if(dent1->d_type == DT_REG){
                     //          char * end = strrchr(dent1->d_name, '.');
@@ -292,15 +300,17 @@ int main(int argc,char *argv[])
                     //          printf("%s",dent1->d_name);
                     //      }
                     // }
-                        close(wrfd);
+
+                    }
+
+                }
+            }
+                                                        close(wrfd);
     close(newfd);
     close(infd);
     close(test);
-                    }
-                    
-                }
-            }
          }
+         
 //                         char level2[150];
 //                         strncpy(level2,level1,150);
 //                         char * end = strrchr(dent1->d_name, '.');

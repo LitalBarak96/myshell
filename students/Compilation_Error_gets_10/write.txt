@@ -1,0 +1,1 @@
+/home/lital/Desktop/myshell/students/Compilation_Error_gets_10/error1.c
