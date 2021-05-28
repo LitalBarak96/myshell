@@ -10,13 +10,12 @@
 #include <fcntl.h>
 #define SIZE 1
 
-
-int Write_to_csv(int fd,char* name, char* msg){
-    char tempArr[1024];
+//func to write to csv
+void Write_to_csv(int fd,char* name, char* msg){
+    char tempArr[150];
     strcpy(tempArr,name);
     char* temp = strcat(tempArr,msg);
     if (write(fd, temp, strlen(temp)) == -1) {}
-    return 0;
 }
 
 
@@ -100,193 +99,288 @@ int excute(char* filename ,char* args[],int fder){
 int main(int argc,char *argv[])
 {
     char cwd[150];
+    char cwd1[150];
     int newfd;
     int infd;
+    int test;
     int wrfd;
     int errfd=2;
     int flag=0;
     char buf1[SIZE];
 	int charsr1;
     int i = 0;
-    getcwd(cwd, sizeof(cwd));
-    char tempPath[150];
-    strncpy(tempPath,cwd,150);
-    strcat(tempPath,"/comp.out");
 
-    int fdin1;           /* input file descriptor */ 
-    //compileing EX31 for comp.c 
-    char *comp[]={"gcc","-o","./comp.out","comp.c",NULL};
-    excute("gcc",comp,errfd);
-	fdin1 = open(argv[1],O_RDONLY);
-	if (fdin1 < 0) /* means file open did not take place */ 
-	{                
-		perror("after open ");  
-		exit(-1); 
-	}
-
-
-    //for the 3 arguments inside the config
-   char line1[3][255];
-    int j=0;
-do{
-        char buf1[SIZE]={};
-		charsr1 = read(fdin1, buf1 ,SIZE);
-        if (buf1[0]!=10){
-        line1[i][j] = buf1[0];
-        j++;
-        }
-        else{
-            i++;
-            j++;
-            line1[i][j]='\0';
-            j=0;
-        }
-
-}while(charsr1 == SIZE);
-
-//changing the dirctory 
-    if (chdir(line1[0])!= 0) {
-    perror("Not a Valid Directory\n");
-    exit(-1);
+    char paths[1024] = {0};
+    char pathDir[1024] = {0};
+    char pathInput[1024] = {0};
+    char pathOutput [1024] = {0};
+    int fdDir = 0;
+    if((fdDir = open(argv[1], O_RDONLY))== -1) {
+        if(write(2, "error in opening conf file\n",
+                strlen("error in opening conf file\n")) == -1){}
+        exit(-1);
     }
-    else{
+    if(read(fdDir, paths,1024) == -1){
+        if(write(2, "error in reading conf file\n",
+                strlen("error in reading conf file\n")) == -1){}
+        exit(-1);
+    }
+
+    // parse the paths:
+    char* token = strtok(paths,"\n");
+    strcpy(pathDir,token);
+    token = strtok(NULL,"\n");
+    strcpy(pathInput,token);
+    token = strtok(NULL,"\n");
+    strcpy(pathOutput,token);
+   
+
+//     level_1_handle(pathDir,pathInput,pathOutput);
+
+
+
+
+
+    //to get the dirctory for the comp
+    getcwd(cwd, sizeof(cwd));
+    char main[150];
+    strncpy(main,cwd,150);
+    
+
+//     // strcat(tempPath,"/comp.out");
+
+//     int fdin1;           /* input file descriptor */ 
+//     //compileing EX31 for comp.c 
+
+
+//     //for the csv file 
+     if((wrfd = open("results.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
+     perror("results.csv");
+      exit(-1);
+     }
+// //for the error file
+         if((errfd = open("error.txt",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
+     perror("error.txt");
+      exit(-1);
+      }
+    char *comp[]={"gcc","-o","./comp.out","comp.c",NULL};
+     excute("gcc",comp,errfd);
+
+
+//     //for the 3 arguments inside the config
+//    char line1[3][150];
+//     int j=0;
+// do{
+//         char buf1[SIZE]={};
+// 		charsr1 = read(fdin1, buf1 ,SIZE);
+//         if (buf1[0]!=10){
+//         line1[i][j] = buf1[0];
+//         j++;
+//         }
+//         else{
+
+//             line1[i][j]='\0';
+//             if(i==3){
+//                 i=2;
+//                 line1[i][j]='\0';
+//             }
+//             j=0;
+//         }
+
+// }while(charsr1 == SIZE);
+
+    if((infd = open(pathInput,O_RDONLY))<0){
+    perror("Input file not exist\n");
+    exit(-1);
+        }
+
+            
+    if((open(pathOutput,O_RDONLY))<0){
+    perror("output file not exist\n");
+        exit(-1);
+        }
+
+
+
+// //changing the dirctory 
+//     // char level0[150];
+//     // char cwd2[150];
+//     // getcwd(cwd2, sizeof(cwd2));
+//     // strncpy(level0,cwd2,150);
+//     // strcat(level0,"/");
+//     // strncpy(level0,,150);
+
+
+ chdir(pathDir);
     struct dirent* dent;
     struct dirent* dent1;
     DIR* srcdir = opendir(".");
     DIR* srcdir1 = opendir(".");
     int counter_for_c=0;
 
-
-//for the csv file 
-    if((wrfd = open("results.csv",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
-    perror("results.csv");
-     exit(-1);
-     }
-//for the error file
-        if((errfd = open("error.txt",O_CREAT|O_TRUNC|O_WRONLY|O_APPEND,0664))<0){
-    perror("error.txt");
-     exit(-1);
-     }
-
-    
+  
 
     if (srcdir == NULL)
     {
         perror("opendir");
         return -1;
     }
-
+//until here we where in student and no
     while((dent = readdir(srcdir)) != NULL)
-    {
-        struct stat st;
+         {
+          struct stat st;
+         getcwd(cwd1, sizeof(cwd1));
+         char level1[150];
+         strncpy(level1,cwd1,150);
+         strcat(level1,"/");
+         strcat(level1,dent->d_name);
 
-        if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
-            continue;
+// //         if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
+// //             continue;
 
 
-// I need to fix searching in SUb directorys
-        if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0)
-        {   
-            perror(dent->d_name);
-            continue;
-        }
-            if (S_ISDIR(st.st_mode)){
-            if(chdir(dent->d_name)!=0){
-            perror("chdir() to name  failed");
+// // // I need to fix searching in SUb directorys
+// //         if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0)
+// //         {   
+// //             perror(dent->d_name);
+// //             continue;
+// //         }
+// open to the dir of the file 
+            if (dent->d_type == DT_DIR){
+            if ((srcdir1 = opendir(level1)) == NULL){
+                 return -1;
+                 perror("here");
             }
-            else{
-            DIR* srcdir1 = opendir(".");
+           
+            
+//            read the files inside
 
+             while((dent1 = readdir(srcdir1)) != NULL)
+                {
 
-            if((infd = open(line1[1],O_RDONLY))<0){
-                perror("Input file not fxist\n");
-                exit(1);
-            }
-            if(open(line1[2],O_RDONLY)<0){
-                perror("Output file not fxist\n");
-                exit(1);
-            }
-            if((newfd = open("d.txt",O_CREAT|O_TRUNC|O_WRONLY,0664))<0){
-            perror("d.txt");
-            exit(1);
-            }
-            while((dent1 = readdir(srcdir1)) != NULL)
-               {
-                   if(dent1->d_type == DT_REG){
-                    char * end = strrchr(dent1->d_name, '.');
-                        if(strcmp(end, ".c") == 0){
+// open in each sub dir the write file I need to make it write into it
+                        char write[150];
+                         strncpy(write,level1,150);
+                        strcat(write,"/");
+                         strcat(write,"write.txt");
+                        char level2[150];
+                         strncpy(level2,level1,150);
+                             if((newfd = open(write,O_CREAT|O_TRUNC|O_WRONLY,0664))<0){
+    perror("write.txt");
+    exit(-1);
+    }
+                    char* end = strrchr(dent1->d_name,'.');
+                    if(end && !strcmp(end, ".c")) {
+                         
                         counter_for_c++;
-                        char *student[]={"gcc","-o","./a.out",dent1->d_name,NULL};
+                        strcat(level2,"/");
+                         strcat(level2,dent1->d_name);
+                         printf("%s",level2);
+                         
+                        char *student[]={"gcc", level2, "-o", "a.out", NULL};
                         dup2(infd, 0); 
                         dup2(newfd,1);
                         dup2(errfd,2);
                         excute("gcc",student,errfd);
                         char* run[] = {"a.out",NULL};
                         int ret = excute("./a.out",run,errfd);
-                        int com = compareOutput(line1[2],tempPath);
-                    if(ret==6){
-                    remove("d.txt");
-                    dup2(wrfd,1);
-                    Write_to_csv(wrfd,dent->d_name,",20,TIMEOUT\n");
-                    fflush(stdout);
-                    flag =1;
-                       }
-                    if(ret==-3){
-                    flag =1;
-                    remove("d.txt");
-                    dup2(wrfd,1);
-                    Write_to_csv(wrfd,dent->d_name,",10,COMPILATION_ERROR\n");
-                    fflush(stdout);
-                    
+                        // int com = compareOutput(pathOutput,tempPath);
                     }
-                    if(com == 1&&flag==0){
-                    remove("d.txt");
-                    dup2(wrfd,1);
-                    Write_to_csv(wrfd,dent->d_name,",100,EXCELLENT\n");
-                    fflush(stdout);
-                    }
-                    if(com == 2&&flag==0){
-                    remove("d.txt");
-                    dup2(wrfd,1);
-                    Write_to_csv(wrfd,dent->d_name,",50,WRONG\n");
-                    fflush(stdout);
-                    }
-                    if(com == 3&&flag==0){
-                    remove("d.txt");
-                    dup2(wrfd,1);
-                    Write_to_csv(wrfd,dent->d_name,",75,SIMILAR\n");
-                    fflush(stdout);
-                    }
-                        }
-                    //if nothing is written inside there is no C file
-                   }
-                   
-               }
-               if(counter_for_c==0){
-                   remove("d.txt");
-                    dup2(wrfd,1);
-                    Write_to_csv(wrfd,dent->d_name,",0,NO_C_FILE\n");
-                    fflush(stdout);
-               }
-
-               counter_for_c =0;
-                
-                 chdir("..");
-
-                closedir(srcdir1);
-            }
-        }
-    
-    
-    }
-    close(wrfd);
+                    // if(dent1->d_type == DT_REG){
+                    //          char * end = strrchr(dent1->d_name, '.');
+                    //      if(strcmp(end, ".c") == 0){
+                    //          printf("%s",dent1->d_name);
+                    //      }
+                    // }
+                        close(wrfd);
     close(newfd);
     close(infd);
+    close(test);
+                    }
+                    
+                }
+            }
+         }
+//                         char level2[150];
+//                         strncpy(level2,level1,150);
+//                         char * end = strrchr(dent1->d_name, '.');
+//                         if(strcmp(end, ".c") == 0){
+//                         strcat(level2,"/");
+//                         strcat(level2,dent1->d_name);
+//                         counter_for_c++;
+//                         char *student[]={"gcc","-o","./a.out",level2,NULL};
+//                         dup2(infd, 0); 
+//                         dup2(newfd,1);
+//                         dup2(errfd,2);
+//                         excute("gcc",student,errfd);
+//                         char* run[] = {"a.out",NULL};
+//                         int ret = excute("./a.out",run,errfd);
+//                         int com = compareOutput(line1[2],tempPath);
+//                     if(ret==6){
+//                     remove("d.txt");
+//                     dup2(wrfd,1);
+//                     Write_to_csv(wrfd,level1,",20,TIMEOUT\n");
+//                     fflush(stdout);
+//                     flag =1;
+//                        }
+//                     if(ret==-3){
+//                     flag =1;
+//                     remove("d.txt");
+//                     dup2(wrfd,1);
+//                     Write_to_csv(wrfd,level1,",10,COMPILATION_ERROR\n");
+//                     fflush(stdout);
+                    
+//                     }
+//                     if(com == 1&&flag==0){
+//                     remove("d.txt");
+//                     dup2(wrfd,1);
+//                     Write_to_csv(wrfd,level1,",100,EXCELLENT\n");
+//                     fflush(stdout);
+//                     }
+//                     if(com == 2&&flag==0){
+//                     remove("d.txt");
+//                     dup2(wrfd,1);
+//                     Write_to_csv(wrfd,level1,",50,WRONG\n");
+//                     fflush(stdout);
+//                     }
+//                     if(com == 3&&flag==0){
+//                     remove("d.txt");
+//                     dup2(wrfd,1);
+//                     Write_to_csv(wrfd,level1,",75,SIMILAR\n");
+//                     fflush(stdout);
+//                     }
+//                         }
+//                     //if nothing is written inside there is no C file
+//                    }
+                   
+//                }
+//                //if there is not C files
+//                if(counter_for_c==0){
+//                    remove("d.txt");
+//                     dup2(wrfd,1);
+//                     Write_to_csv(wrfd,level1,",0,NO_C_FILE\n");
+//                     fflush(stdout);
+//                }
+
+//                counter_for_c =0;
+//                 //go up 
+//                  chdir("..");
+
+//                 closedir(srcdir1);
+//             }
+//         }
     
-    closedir(srcdir);
-    return 0;
-    }
+    
+//     }
+//     close(wrfd);
+//     close(newfd);
+//     close(infd);
+//     close(test);
+    
+//     closedir(srcdir);
+//     return 0;
+//     }
 
 
 
-}
+// }

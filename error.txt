@@ -1,0 +1,11 @@
+/home/lital/Desktop/myshell/students/../ex32.c: In function ‘compareOutput’:
+/home/lital/Desktop/myshell/students/../ex32.c:39:12: warning: implicit declaration of function ‘waitpid’; did you mean ‘getpid’? [-Wimplicit-function-declaration]
+         if(waitpid(pid, &status, 0) >0){
+            ^~~~~~~
+            getpid
+error in opening conf file
+Use: cd <directory>
+/home/lital/Desktop/myshell/students/Compilation_Error_gets_10/error1.c: In function ‘main’:
+/home/lital/Desktop/myshell/students/Compilation_Error_gets_10/error1.c:5:5: error: expected declaration or statement at end of input
+     printf("dfg");
+     ^~~~~~
