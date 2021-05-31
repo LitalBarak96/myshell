@@ -331,6 +331,8 @@ continue;
                     if(end && !strcmp(end, ".c")) {
                          //level 2 is the file name 'it sepouse to be with the c file
                         counter_for_c++;
+                        int ret1=0;
+                        int com=0;
                         strcat(level2,"/");
                          strcat(level2,dent1->d_name);
                         dup2(infd, 0); 
@@ -340,10 +342,15 @@ continue;
                         char *student[]={"gcc","-o","./a.out",level2,NULL};
                         excute("gcc",student,errfd);
                         char* run[] = {"a.out",NULL};
-                        int ret1 = excute("./a.out",run,errfd);
-                        int com = compareOutput(compad,OUT,write);
                         int ret=compileCheck(level2);
-                    if(ret==-3&&ret1==6){
+                        if (ret !=-3){
+                            ret1= excute("./a.out",run,errfd);
+                             com= compareOutput(compad,OUT,write);
+                        }
+                        
+                        
+                        
+                    if(ret==-3){
                     timeout =1;
                     remove(write);
                     dup2(wrfd,1);
@@ -351,7 +358,7 @@ continue;
                     fflush(stdout);
                     flag =1;
                     }
-                    if(ret1==6&&ret!=-3){
+                    if(ret1==6){
                     remove(write);
                     dup2(wrfd,1);
                     Write_to_csv(wrfd,dent->d_name,",20,TIMEOUT\n");
