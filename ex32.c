@@ -12,9 +12,9 @@
 
 //func to write to csv
 void Write_to_csv(int fd,char* name, char* msg){
-    char tempArr[150];
-    strcpy(tempArr,name);
-    char* temp = strcat(tempArr,msg);
+    char tempA[150];
+    strcpy(tempA,name);
+    char* temp = strcat(tempA,msg);
     if (write(fd, temp, strlen(temp)) == -1) {}
 }
 
@@ -23,8 +23,7 @@ void Write_to_csv(int fd,char* name, char* msg){
 int compareOutput(char comp[],char outputFile[], char path_to_write[]){
     int status;
     pid_t pid;
-    pid = fork();
-    if(pid == 0) {
+    if((pid = fork()) == 0){
         char *tab[] = {comp,outputFile,path_to_write, NULL};
         if (execvp(comp, tab) == -1) {
             if(write(2, "error in running in compare function\n",
@@ -95,13 +94,12 @@ int excute(char* filename ,char* args[],int fder){
 
 }
 
-int compileCheck(char fileName[]){
+int compile_Check(char fileName[]){
     int status;
     pid_t pid;
-    pid = fork();
-    if(pid == 0) {
-        char *tab[] = {"gcc", fileName, "-o", "compiletest.out", NULL};
-        if (execvp("gcc", tab) == -1) {
+    if((pid = fork()) == 0){
+        char *a[] = {"gcc", fileName, "-o", "compiletest.out", NULL};
+        if (execvp("gcc", a) == -1) {
             if(write(2, "error in compile file, execvp failed.\n",
                      strlen("error in compile file, execvp failed.\n")) == -1){}
             exit(-1);
@@ -170,7 +168,7 @@ int main(int argc,char *argv[])
     strcpy(pathOutput,token);
    
 
-//     level_1_handle(pathDir,pathInput,pathOutput);
+
 
 
 
@@ -182,10 +180,6 @@ int main(int argc,char *argv[])
     strncpy(main,cwd,150);
     
 
-//     // strcat(tempPath,"/comp.out");
-
-//     int fdin1;           /* input file descriptor */ 
-//     //compileing EX31 for comp.c 
 
 
 //     //for the csv file 
@@ -205,28 +199,6 @@ int main(int argc,char *argv[])
     strcat(compad,"/");
     strcat(compad,"comp.out");
 
-//     //for the 3 arguments inside the config
-//    char line1[3][150];
-//     int j=0;
-// do{
-//         char buf1[SIZE]={};
-// 		charsr1 = read(fdin1, buf1 ,SIZE);
-//         if (buf1[0]!=10){
-//         line1[i][j] = buf1[0];
-//         j++;
-//         }
-//         else{
-
-//             line1[i][j]='\0';
-//             if(i==3){
-//                 i=2;
-//                 line1[i][j]='\0';
-//             }
-//             j=0;
-//         }
-
-// }while(charsr1 == SIZE);
-
 
 
             
@@ -237,13 +209,6 @@ int main(int argc,char *argv[])
 
 
 
-// //changing the dirctory 
-//     // char level0[150];
-//     // char cwd2[150];
-//     // getcwd(cwd2, sizeof(cwd2));
-//     // strncpy(level0,cwd2,150);
-//     // strcat(level0,"/");
-//     // strncpy(level0,,150);
 
 
  chdir(pathDir);
@@ -280,7 +245,7 @@ int main(int argc,char *argv[])
     exit(-1);
         }
 
-             //LELVEL 1 IS
+
         flag =0;
         timeout=0;
           struct stat st;
@@ -293,13 +258,7 @@ int main(int argc,char *argv[])
 
 
 
-// // // I need to fix searching in SUb directorys
-// //         if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0)
-// //         {   
-// //             perror(dent->d_name);
-// //             continue;
-// //         }
-// open to the dir of the file 
+
             if (dent->d_type == DT_DIR){
             if ((srcdir1 = opendir(level1)) == NULL){
                  return -1;
@@ -342,7 +301,7 @@ continue;
                         char *student[]={"gcc","-o","./a.out",level2,NULL};
                         excute("gcc",student,errfd);
                         char* run[] = {"a.out",NULL};
-                        int ret=compileCheck(level2);
+                        int ret=compile_Check(level2);
                         if (ret !=-3){
                             ret1= excute("./a.out",run,errfd);
                              com= compareOutput(compad,OUT,write);
